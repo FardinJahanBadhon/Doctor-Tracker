@@ -1,2 +1,4 @@
-/backend
-/README.md
+# OS / editor cruft not already covered by frontend/backend's own .gitignore
+.DS_Store
+Thumbs.db
+*.log

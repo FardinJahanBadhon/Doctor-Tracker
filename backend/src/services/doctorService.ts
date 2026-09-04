@@ -1,0 +1,74 @@
+import { FilterQuery } from "mongoose";
+import { Request } from "express";
+import { Doctor, IDoctor } from "../models/Doctor";
+import { Patient } from "../models/Patient";
+import { ApiError } from "../utils/ApiError";
+import { getPagination, buildMeta, PaginationMeta } from "../utils/pagination";
+import { CreateDoctorInput, ListDoctorsQuery, UpdateDoctorInput } from "../validators/doctorValidator";
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function buildFilter(query: ListDoctorsQuery): FilterQuery<IDoctor> {
+  const filter: FilterQuery<IDoctor> = {};
+
+  if (query.search) {
+    filter.$text = { $search: query.search };
+  }
+  if (query.specialization) {
+    filter.specialization = { $regex: `^${escapeRegex(query.specialization)}$`, $options: "i" };
+  }
+  if (query.hospital) {
+    filter.hospital = { $regex: `^${escapeRegex(query.hospital)}$`, $options: "i" };
+  }
+  if (query.dateFrom || query.dateTo) {
+    filter.createdAt = {};
+    if (query.dateFrom) filter.createdAt.$gte = new Date(query.dateFrom);
+    if (query.dateTo) {
+      const endOfDay = new Date(query.dateTo);
+      endOfDay.setHours(23, 59, 59, 999);
+      filter.createdAt.$lte = endOfDay;
+    }
+  }
+
+  return filter;
+}
+
+export async function createDoctor(payload: CreateDoctorInput): Promise<IDoctor> {
+  return Doctor.create(payload);
+}
+
+export async function listDoctors(req: Request): Promise<{ doctors: IDoctor[]; meta: PaginationMeta }> {
+  const { page, limit, skip } = getPagination(req);
+  const query = req.query as ListDoctorsQuery;
+  const filter = buildFilter(query);
+
+  // Relevance-sort matches when searching (uses the text index's score); otherwise newest first.
+  const cursor = query.search
+    ? Doctor.find(filter, { score: { $meta: "textScore" } }).sort({ score: { $meta: "textScore" } })
+    : Doctor.find(filter).sort({ createdAt: -1 });
+
+  const [doctors, total] = await Promise.all([cursor.skip(skip).limit(limit), Doctor.countDocuments(filter)]);
+
+  return { doctors, meta: buildMeta(total, page, limit) };
+}
+
+export async function getDoctorById(id: string): Promise<IDoctor> {
+  const doctor = await Doctor.findById(id);
+  if (!doctor) throw ApiError.notFound("Doctor not found");
+  return doctor;
+}
+
+export async function updateDoctor(id: string, payload: UpdateDoctorInput): Promise<IDoctor> {
+  const doctor = await Doctor.findByIdAndUpdate(id, payload, { new: true, runValidators: true });
+  if (!doctor) throw ApiError.notFound("Doctor not found");
+  return doctor;
+}
+
+export async function deleteDoctor(id: string): Promise<void> {
+  const doctor = await Doctor.findByIdAndDelete(id);
+  if (!doctor) throw ApiError.notFound("Doctor not found");
+  // Keep referential integrity — a patient's `doctor` field must never dangle.
+  await Patient.deleteMany({ doctor: id });
+}
