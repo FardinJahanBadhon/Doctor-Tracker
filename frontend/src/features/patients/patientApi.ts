@@ -66,15 +66,18 @@ export const patientApi = apiSlice.injectEndpoints({
     createPatient: builder.mutation<Patient, PatientInput>({
       query: (body) => ({ url: "/patients", method: "POST", body }),
       transformResponse: (response: PatientResponse) => response.patient,
-      invalidatesTags: [{ type: "Patient", id: "LIST" }],
+      invalidatesTags: [{ type: "Patient", id: "LIST" }, "Dashboard"],
     }),
 
     updatePatient: builder.mutation<Patient, { id: string; body: Partial<PatientInput> }>({
       query: ({ id, body }) => ({ url: `/patients/${id}`, method: "PUT", body }),
       transformResponse: (response: PatientResponse) => response.patient,
+      // A patient can be reassigned to a different doctor here, which changes the
+      // patients-per-doctor breakdown even though the total count doesn't move.
       invalidatesTags: (_result, _error, { id }) => [
         { type: "Patient", id },
         { type: "Patient", id: "LIST" },
+        "Dashboard",
       ],
     }),
 
@@ -83,6 +86,7 @@ export const patientApi = apiSlice.injectEndpoints({
       invalidatesTags: (_result, _error, id) => [
         { type: "Patient", id },
         { type: "Patient", id: "LIST" },
+        "Dashboard",
       ],
     }),
   }),

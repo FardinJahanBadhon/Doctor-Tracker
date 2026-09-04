@@ -45,7 +45,7 @@ export const doctorApi = apiSlice.injectEndpoints({
     createDoctor: builder.mutation<Doctor, DoctorInput>({
       query: (body) => ({ url: "/doctors", method: "POST", body }),
       transformResponse: (response: DoctorResponse) => response.doctor,
-      invalidatesTags: [{ type: "Doctor", id: "LIST" }],
+      invalidatesTags: [{ type: "Doctor", id: "LIST" }, "Dashboard"],
     }),
 
     updateDoctor: builder.mutation<Doctor, { id: string; body: Partial<DoctorInput> }>({
@@ -59,9 +59,13 @@ export const doctorApi = apiSlice.injectEndpoints({
 
     deleteDoctor: builder.mutation<void, string>({
       query: (id) => ({ url: `/doctors/${id}`, method: "DELETE" }),
+      // Deleting a doctor cascades to their patients server-side, so both dashboard
+      // charts (totals and patients-per-doctor) can change too.
       invalidatesTags: (_result, _error, id) => [
         { type: "Doctor", id },
         { type: "Doctor", id: "LIST" },
+        { type: "Patient", id: "LIST" },
+        "Dashboard",
       ],
     }),
   }),

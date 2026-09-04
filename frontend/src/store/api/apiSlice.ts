@@ -19,7 +19,7 @@ export const apiSlice = createApi({
     baseUrl: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000/api",
     credentials: "include",
   }),
-  tagTypes: ["Auth", "Doctor", "Patient"],
+  tagTypes: ["Auth", "Doctor", "Patient", "Dashboard"],
   endpoints: (builder) => ({
     getHealth: builder.query<HealthResponse, void>({
       query: () => "/health",

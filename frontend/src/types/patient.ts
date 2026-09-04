@@ -29,6 +29,11 @@ export interface PatientInput {
 }
 
 export interface PatientListParams {
+  search?: string;
+  condition?: string;
+  doctorId?: string;
+  dateFrom?: string;
+  dateTo?: string;
   page?: number;
   limit?: number;
 }
