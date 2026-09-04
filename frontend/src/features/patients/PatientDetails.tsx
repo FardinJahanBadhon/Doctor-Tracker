@@ -18,7 +18,7 @@ import { getErrorMessage } from "@/utils/getErrorMessage";
 import { ROUTES } from "@/constants/routes";
 
 export function PatientDetails({ patientId }: { patientId: string }) {
-  const { data: patient, isLoading, isError, refetch } = useGetPatientQuery(patientId);
+  const { data: patient, isLoading, isError, error: patientError, refetch } = useGetPatientQuery(patientId);
   const [deletePatient, { isLoading: isDeleting }] = useDeletePatientMutation();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -43,7 +43,7 @@ export function PatientDetails({ patientId }: { patientId: string }) {
       </Link>
 
       {isLoading && <Skeleton className="h-40 w-full" />}
-      {isError && <ErrorState message="Couldn't load this patient." onRetry={() => refetch()} />}
+      {isError && <ErrorState message={getErrorMessage(patientError)} onRetry={() => refetch()} />}
 
       {!isLoading && !isError && patient && (
         <Card>

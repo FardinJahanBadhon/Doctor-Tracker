@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -69,10 +69,13 @@ export default function DoctorsPage() {
     setDialogOpen(true);
   };
 
-  const openEditDialog = (doctor: Doctor) => {
+  // Stable reference so DoctorTable's React.memo isn't defeated by a fresh
+  // function identity on every render (setDoctorToEdit/setDialogOpen are
+  // themselves stable, so an empty dependency array is correct here).
+  const openEditDialog = useCallback((doctor: Doctor) => {
     setDoctorToEdit(doctor);
     setDialogOpen(true);
-  };
+  }, []);
 
   const handleDelete = async () => {
     if (!doctorToDelete) return;

@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useLoginMutation } from "./authApi";
 import { ROUTES } from "@/constants/routes";
+import { getErrorMessage } from "@/utils/getErrorMessage";
 
 const loginSchema = z.object({
   email: z.string().min(1, "Email is required").email("Enter a valid email address"),
@@ -18,14 +19,6 @@ const loginSchema = z.object({
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
-
-function getErrorMessage(error: unknown): string {
-  if (error && typeof error === "object" && "data" in error) {
-    const data = (error as { data?: { message?: string } }).data;
-    if (data?.message) return data.message;
-  }
-  return "Something went wrong. Please try again.";
-}
 
 export function LoginForm() {
   const router = useRouter();

@@ -1,8 +1,15 @@
-import { Schema, model, Document, Types } from "mongoose";
+import { Schema, model, Types } from "mongoose";
+import { IDoctor } from "./Doctor";
 
-export interface IPatient extends Document {
+type DoctorSummary = Pick<IDoctor, "_id" | "name" | "specialization" | "hospital">;
+
+// Plain schema shape, not extended with Document — see Doctor.ts for why. `doctor` is
+// typed as either the raw reference or a populated summary since both occur in practice
+// (populated on reads, a bare id on writes).
+export interface IPatient {
+  _id: Types.ObjectId;
   name: string;
-  doctor: Types.ObjectId;
+  doctor: Types.ObjectId | DoctorSummary;
   condition: string;
   phone: string;
   email?: string;

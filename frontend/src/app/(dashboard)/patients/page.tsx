@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -76,10 +76,12 @@ export default function PatientsPage() {
     setDialogOpen(true);
   };
 
-  const openEditDialog = (patient: Patient) => {
+  // Stable reference so PatientTable's React.memo isn't defeated by a fresh
+  // function identity on every render.
+  const openEditDialog = useCallback((patient: Patient) => {
     setPatientToEdit(patient);
     setDialogOpen(true);
-  };
+  }, []);
 
   const handleDelete = async () => {
     if (!patientToDelete) return;

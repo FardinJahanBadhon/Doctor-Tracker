@@ -49,25 +49,31 @@ export async function listDoctors(req: Request): Promise<{ doctors: IDoctor[]; m
     ? Doctor.find(filter, { score: { $meta: "textScore" } }).sort({ score: { $meta: "textScore" } })
     : Doctor.find(filter).sort({ createdAt: -1 });
 
-  const [doctors, total] = await Promise.all([cursor.skip(skip).limit(limit), Doctor.countDocuments(filter)]);
+  // .lean() — these results are only ever JSON-serialized in the controller, never
+  // mutated or re-saved, so skipping Mongoose document hydration (change tracking,
+  // getters, prototype methods) is pure savings, especially across a whole page of results.
+  const [doctors, total] = await Promise.all([
+    cursor.skip(skip).limit(limit).lean(),
+    Doctor.countDocuments(filter),
+  ]);
 
   return { doctors, meta: buildMeta(total, page, limit) };
 }
 
 export async function getDoctorById(id: string): Promise<IDoctor> {
-  const doctor = await Doctor.findById(id);
+  const doctor = await Doctor.findById(id).lean();
   if (!doctor) throw ApiError.notFound("Doctor not found");
   return doctor;
 }
 
 export async function updateDoctor(id: string, payload: UpdateDoctorInput): Promise<IDoctor> {
-  const doctor = await Doctor.findByIdAndUpdate(id, payload, { new: true, runValidators: true });
+  const doctor = await Doctor.findByIdAndUpdate(id, payload, { new: true, runValidators: true }).lean();
   if (!doctor) throw ApiError.notFound("Doctor not found");
   return doctor;
 }
 
 export async function deleteDoctor(id: string): Promise<void> {
-  const doctor = await Doctor.findByIdAndDelete(id);
+  const doctor = await Doctor.findByIdAndDelete(id).lean();
   if (!doctor) throw ApiError.notFound("Doctor not found");
   // Keep referential integrity — a patient's `doctor` field must never dangle.
   await Patient.deleteMany({ doctor: id });

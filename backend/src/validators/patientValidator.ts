@@ -16,7 +16,9 @@ export const createPatientSchema = z.object({
   address: z.string().trim().max(250).optional(),
 });
 
-export const updatePatientSchema = createPatientSchema.partial();
+export const updatePatientSchema = createPatientSchema
+  .partial()
+  .refine((data) => Object.keys(data).length > 0, { message: "Provide at least one field to update" });
 
 export const patientIdParamSchema = z.object({
   id: objectId,

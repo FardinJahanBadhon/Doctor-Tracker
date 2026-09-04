@@ -1,8 +1,8 @@
+import { memo } from "react";
 import Link from "next/link";
-import { Pencil, Trash2 } from "lucide-react";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { TableRowActions } from "@/components/common/TableRowActions";
 import { Doctor } from "@/types/doctor";
 import { formatDate } from "@/utils/formatDate";
 import { ROUTES } from "@/constants/routes";
@@ -13,7 +13,7 @@ interface DoctorTableProps {
   onDelete: (doctor: Doctor) => void;
 }
 
-export function DoctorTable({ doctors, onEdit, onDelete }: DoctorTableProps) {
+function DoctorTableComponent({ doctors, onEdit, onDelete }: DoctorTableProps) {
   return (
     <div className="overflow-x-auto rounded-lg border">
       <Table>
@@ -44,26 +44,12 @@ export function DoctorTable({ doctors, onEdit, onDelete }: DoctorTableProps) {
               <TableCell>{doctor.email}</TableCell>
               <TableCell>{formatDate(doctor.createdAt)}</TableCell>
               <TableCell className="text-right">
-                <div className="flex justify-end gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onEdit(doctor)}
-                    aria-label={`Edit ${doctor.name}`}
-                    className="text-muted-foreground hover:bg-primary/10 hover:text-primary"
-                  >
-                    <Pencil size={16} />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onDelete(doctor)}
-                    aria-label={`Delete ${doctor.name}`}
-                    className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                  >
-                    <Trash2 size={16} />
-                  </Button>
-                </div>
+                <TableRowActions
+                  onEdit={() => onEdit(doctor)}
+                  onDelete={() => onDelete(doctor)}
+                  editLabel={`Edit ${doctor.name}`}
+                  deleteLabel={`Delete ${doctor.name}`}
+                />
               </TableCell>
             </TableRow>
           ))}
@@ -72,3 +58,8 @@ export function DoctorTable({ doctors, onEdit, onDelete }: DoctorTableProps) {
     </div>
   );
 }
+
+// Skips re-rendering the whole table when the parent page re-renders for unrelated
+// reasons (opening a dialog, toggling delete confirmation) but `doctors`/`onEdit`/
+// `onDelete` haven't actually changed.
+export const DoctorTable = memo(DoctorTableComponent);

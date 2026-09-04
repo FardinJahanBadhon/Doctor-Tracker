@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -27,7 +27,7 @@ import { ROUTES } from "@/constants/routes";
 const ALL_PATIENTS_LIMIT = 100;
 
 export function DoctorDetails({ doctorId }: { doctorId: string }) {
-  const { data: doctor, isLoading, isError, refetch } = useGetDoctorQuery(doctorId);
+  const { data: doctor, isLoading, isError, error: doctorError, refetch } = useGetDoctorQuery(doctorId);
   const [deleteDoctor, { isLoading: isDeletingDoctor }] = useDeleteDoctorMutation();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteDoctorOpen, setDeleteDoctorOpen] = useState(false);
@@ -37,6 +37,7 @@ export function DoctorDetails({ doctorId }: { doctorId: string }) {
     data: patientsData,
     isFetching: isFetchingPatients,
     isError: isPatientsError,
+    error: patientsError,
     refetch: refetchPatients,
   } = useGetDoctorPatientsQuery({ doctorId, params: { limit: ALL_PATIENTS_LIMIT } });
 
@@ -62,10 +63,12 @@ export function DoctorDetails({ doctorId }: { doctorId: string }) {
     setPatientDialogOpen(true);
   };
 
-  const openEditPatient = (patient: Patient) => {
+  // Stable reference so PatientTable's React.memo isn't defeated by a fresh
+  // function identity on every render.
+  const openEditPatient = useCallback((patient: Patient) => {
     setPatientToEdit(patient);
     setPatientDialogOpen(true);
-  };
+  }, []);
 
   const handleDeletePatient = async () => {
     if (!patientToDelete) return;
@@ -85,7 +88,7 @@ export function DoctorDetails({ doctorId }: { doctorId: string }) {
       </Link>
 
       {isLoading && <Skeleton className="h-40 w-full" />}
-      {isError && <ErrorState message="Couldn't load this doctor." onRetry={() => refetch()} />}
+      {isError && <ErrorState message={getErrorMessage(doctorError)} onRetry={() => refetch()} />}
 
       {!isLoading && !isError && doctor && (
         <>
@@ -152,7 +155,7 @@ export function DoctorDetails({ doctorId }: { doctorId: string }) {
           )}
 
           {!isFetchingPatients && isPatientsError && (
-            <ErrorState message="Couldn't load this doctor's patients." onRetry={() => refetchPatients()} />
+            <ErrorState message={getErrorMessage(patientsError)} onRetry={() => refetchPatients()} />
           )}
 
           {!isFetchingPatients && !isPatientsError && patientsData && patientsData.patients.length === 0 && (

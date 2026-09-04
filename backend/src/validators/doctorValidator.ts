@@ -13,7 +13,9 @@ export const createDoctorSchema = z.object({
   email: z.string().trim().toLowerCase().email("Enter a valid email address"),
 });
 
-export const updateDoctorSchema = createDoctorSchema.partial();
+export const updateDoctorSchema = createDoctorSchema
+  .partial()
+  .refine((data) => Object.keys(data).length > 0, { message: "Provide at least one field to update" });
 
 export const doctorIdParamSchema = z.object({
   id: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid doctor id"),

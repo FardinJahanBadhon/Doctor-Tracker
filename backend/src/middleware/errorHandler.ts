@@ -17,6 +17,24 @@ export function errorHandler(err: unknown, _req: Request, res: Response, _next: 
     return;
   }
 
+  // Every route already validates :id params and ref-field bodies with Zod before they
+  // reach Mongoose, so these shouldn't fire in practice — but a raw CastError/ValidationError
+  // slipping through (e.g. a future query path that forgets that guard) should still come
+  // back as a client error with a useful message, not an opaque 500.
+  if (err && typeof err === "object" && "name" in err) {
+    const name = (err as { name: string }).name;
+    if (name === "CastError") {
+      res.status(400).json({ success: false, message: "Invalid identifier supplied" });
+      return;
+    }
+    if (name === "ValidationError") {
+      const validationErr = err as unknown as { errors: Record<string, { path: string; message: string }> };
+      const errors = Object.values(validationErr.errors).map((e) => ({ path: e.path, message: e.message }));
+      res.status(400).json({ success: false, message: "Validation failed", errors });
+      return;
+    }
+  }
+
   console.error("[unhandled error]", err);
   res.status(500).json({
     success: false,

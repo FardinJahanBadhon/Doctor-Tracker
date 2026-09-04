@@ -1,6 +1,11 @@
-import { Schema, model, Document } from "mongoose";
+import { Schema, model, Types } from "mongoose";
 
-export interface IDoctor extends Document {
+// Plain schema shape, not extended with Document — this is the type Mongoose 8's
+// generics use for both hydrated instances (Model.create/save) and .lean() results
+// alike, so read-only queries can use .lean() (skip document hydration overhead)
+// without a type mismatch against Document-specific internals.
+export interface IDoctor {
+  _id: Types.ObjectId;
   name: string;
   specialization: string;
   hospital: string;
