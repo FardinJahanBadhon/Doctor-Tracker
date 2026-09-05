@@ -34,10 +34,10 @@ function PatientTableComponent({ patients, onEdit, onDelete, showDoctorColumn = 
           <TableRow>
             <TableHead>Name</TableHead>
             <TableHead>Condition</TableHead>
-            {showDoctorColumn && <TableHead>Doctor</TableHead>}
-            <TableHead>Phone</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Added</TableHead>
+            {showDoctorColumn && <TableHead className="hidden md:table-cell">Doctor</TableHead>}
+            <TableHead className="hidden lg:table-cell">Phone</TableHead>
+            <TableHead className="hidden xl:table-cell">Email</TableHead>
+            <TableHead className="hidden lg:table-cell">Added</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -48,18 +48,25 @@ function PatientTableComponent({ patients, onEdit, onDelete, showDoctorColumn = 
                 <Link href={ROUTES.patientDetails(patient._id)} className="font-medium text-primary hover:underline">
                   {patient.name}
                 </Link>
+                {showDoctorColumn && (
+                  <p className="text-xs text-muted-foreground md:hidden">
+                    {patient.doctor ? patient.doctor.name : "No doctor assigned"}
+                  </p>
+                )}
               </TableCell>
               <TableCell>
                 <Badge variant="secondary">{patient.condition}</Badge>
               </TableCell>
               {showDoctorColumn && (
-                <TableCell>
+                <TableCell className="hidden md:table-cell">
                   <DoctorCell doctor={patient.doctor} />
                 </TableCell>
               )}
-              <TableCell>{patient.phone}</TableCell>
-              <TableCell>{patient.email || <span className="text-muted-foreground">—</span>}</TableCell>
-              <TableCell>{formatDate(patient.createdAt)}</TableCell>
+              <TableCell className="hidden lg:table-cell">{patient.phone}</TableCell>
+              <TableCell className="hidden xl:table-cell">
+                {patient.email || <span className="text-muted-foreground">—</span>}
+              </TableCell>
+              <TableCell className="hidden lg:table-cell">{formatDate(patient.createdAt)}</TableCell>
               <TableCell className="text-right">
                 <TableRowActions
                   onEdit={() => onEdit(patient)}

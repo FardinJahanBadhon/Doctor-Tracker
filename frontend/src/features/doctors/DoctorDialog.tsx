@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { DoctorForm } from "./DoctorForm";
 import { useCreateDoctorMutation, useUpdateDoctorMutation } from "./doctorApi";
 import { Doctor, DoctorInput } from "@/types/doctor";
@@ -48,9 +48,12 @@ export function DoctorDialog({ open, onClose, doctor }: DoctorDialogProps) {
         }
       }}
     >
-      <DialogContent>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit Doctor" : "Add Doctor"}</DialogTitle>
+          <DialogDescription>
+            {isEdit ? "Update this doctor's profile details." : "Add a new doctor profile to the system."}
+          </DialogDescription>
         </DialogHeader>
         <DoctorForm
           defaultValues={doctor ?? undefined}

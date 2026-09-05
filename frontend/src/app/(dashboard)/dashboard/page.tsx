@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Stethoscope, Users } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardAction } from "@/components/ui/card";
+import { Stethoscope, Users, ChartColumnBig, TrendingUp } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageHeader } from "@/components/common/PageHeader";
 import { ErrorState } from "@/components/common/ErrorState";
 import { StatCard } from "@/features/dashboard/StatCard";
 import { PatientsPerDoctorChart } from "@/features/dashboard/PatientsPerDoctorChart";
@@ -33,12 +34,10 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-xl font-bold">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">
-          Welcome back, {me?.admin.name ?? "Admin"}. Here&apos;s an overview of your doctors and patients.
-        </p>
-      </div>
+      <PageHeader
+        title="Dashboard"
+        description={`Welcome back, ${me?.admin.name ?? "Admin"}. Here's an overview of your doctors and patients.`}
+      />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <StatCard
@@ -60,8 +59,14 @@ export default function DashboardPage() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-sm font-semibold">Patients per Doctor</CardTitle>
+        <CardHeader className="flex items-center gap-3 space-y-0">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <ChartColumnBig size={18} />
+          </div>
+          <div>
+            <CardTitle className="text-base">Patients per Doctor</CardTitle>
+            <CardDescription>How your patient load is distributed across doctors</CardDescription>
+          </div>
         </CardHeader>
         <CardContent>
           {perDoctor.isLoading && <Skeleton className="h-56 w-full" />}
@@ -80,23 +85,29 @@ export default function DashboardPage() {
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-sm font-semibold">Activity Over Time</CardTitle>
-          <CardAction>
-            <div className="flex gap-1 rounded-lg border p-1">
-              {RANGES.map((r) => (
-                <Button
-                  key={r.value}
-                  size="sm"
-                  variant={range === r.value ? "default" : "ghost"}
-                  onClick={() => setRange(r.value)}
-                  className="h-7 px-2.5 text-xs"
-                >
-                  {r.label}
-                </Button>
-              ))}
+        <CardHeader className="flex flex-wrap items-center justify-between gap-3 space-y-0">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <TrendingUp size={18} />
             </div>
-          </CardAction>
+            <div>
+              <CardTitle className="text-base">Activity Over Time</CardTitle>
+              <CardDescription>New doctors and patients added over the selected period</CardDescription>
+            </div>
+          </div>
+          <div className="flex gap-1 rounded-lg border p-1">
+            {RANGES.map((r) => (
+              <Button
+                key={r.value}
+                size="sm"
+                variant={range === r.value ? "default" : "ghost"}
+                onClick={() => setRange(r.value)}
+                className="h-7 px-2.5 text-xs"
+              >
+                {r.label}
+              </Button>
+            ))}
+          </div>
         </CardHeader>
         <CardContent>
           {stats.isFetching && <Skeleton className="h-64 w-full" />}

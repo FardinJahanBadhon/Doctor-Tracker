@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowLeft, Mail, Phone, MapPin, Pencil, Trash2, Calendar, Stethoscope } from "lucide-react";
+import { ArrowLeft, Mail, Phone, MapPin, Pencil, Trash2, Calendar, Stethoscope, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -49,11 +49,16 @@ export function PatientDetails({ patientId }: { patientId: string }) {
         <Card>
           <CardContent className="flex flex-col gap-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <h1 className="text-xl font-bold">{patient.name}</h1>
-                <Badge variant="secondary" className="mt-1.5">
-                  {patient.condition}
-                </Badge>
+              <div className="flex items-start gap-4">
+                <div className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary sm:flex">
+                  <UserRound size={26} />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold tracking-tight">{patient.name}</h1>
+                  <Badge variant="secondary" className="mt-1.5">
+                    {patient.condition}
+                  </Badge>
+                </div>
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>

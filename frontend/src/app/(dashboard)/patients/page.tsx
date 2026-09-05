@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PageHeader } from "@/components/common/PageHeader";
 import { EmptyState } from "@/components/common/EmptyState";
 import { ErrorState } from "@/components/common/ErrorState";
 import { DeleteConfirmationDialog } from "@/components/common/DeleteConfirmationDialog";
@@ -96,15 +97,15 @@ export default function PatientsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold">Patients</h1>
-          <p className="text-sm text-muted-foreground">Manage patient records.</p>
-        </div>
-        <Button onClick={openCreateDialog}>
-          <Plus size={16} /> Add Patient
-        </Button>
-      </div>
+      <PageHeader
+        title="Patients"
+        description="Manage patient records."
+        action={
+          <Button onClick={openCreateDialog}>
+            <Plus size={16} /> Add Patient
+          </Button>
+        }
+      />
 
       <FilterBar>
         <SearchBar

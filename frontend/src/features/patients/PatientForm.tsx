@@ -118,7 +118,7 @@ export function PatientForm({
         {errors.condition && <span className="text-xs text-destructive">{errors.condition.message}</span>}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="phone">Phone</Label>
           <Input id="phone" placeholder="+1-555-0100" aria-invalid={Boolean(errors.phone)} {...register("phone")} />

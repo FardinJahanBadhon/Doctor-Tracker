@@ -21,10 +21,10 @@ function DoctorTableComponent({ doctors, onEdit, onDelete }: DoctorTableProps) {
           <TableRow>
             <TableHead>Name</TableHead>
             <TableHead>Specialization</TableHead>
-            <TableHead>Hospital</TableHead>
-            <TableHead>Phone</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Added</TableHead>
+            <TableHead className="hidden md:table-cell">Hospital</TableHead>
+            <TableHead className="hidden lg:table-cell">Phone</TableHead>
+            <TableHead className="hidden xl:table-cell">Email</TableHead>
+            <TableHead className="hidden lg:table-cell">Added</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -35,14 +35,15 @@ function DoctorTableComponent({ doctors, onEdit, onDelete }: DoctorTableProps) {
                 <Link href={ROUTES.doctorDetails(doctor._id)} className="font-medium text-primary hover:underline">
                   {doctor.name}
                 </Link>
+                <p className="text-xs text-muted-foreground md:hidden">{doctor.hospital}</p>
               </TableCell>
               <TableCell>
                 <Badge variant="secondary">{doctor.specialization}</Badge>
               </TableCell>
-              <TableCell>{doctor.hospital}</TableCell>
-              <TableCell>{doctor.phone}</TableCell>
-              <TableCell>{doctor.email}</TableCell>
-              <TableCell>{formatDate(doctor.createdAt)}</TableCell>
+              <TableCell className="hidden md:table-cell">{doctor.hospital}</TableCell>
+              <TableCell className="hidden lg:table-cell">{doctor.phone}</TableCell>
+              <TableCell className="hidden xl:table-cell">{doctor.email}</TableCell>
+              <TableCell className="hidden lg:table-cell">{formatDate(doctor.createdAt)}</TableCell>
               <TableCell className="text-right">
                 <TableRowActions
                   onEdit={() => onEdit(doctor)}

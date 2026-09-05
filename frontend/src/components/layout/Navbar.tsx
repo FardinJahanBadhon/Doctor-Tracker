@@ -26,14 +26,16 @@ export function Navbar() {
   };
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between border-b bg-background px-4 sm:px-6">
+    <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center justify-between border-b bg-background/95 px-4 backdrop-blur-sm supports-backdrop-filter:bg-background/80 sm:px-6">
       <SidebarTrigger />
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="gap-2">
-            <UserRound size={18} />
-            <span className="hidden text-sm sm:inline">{data?.admin.name ?? "Admin"}</span>
+          <Button variant="ghost" className="gap-2 pl-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <UserRound size={16} />
+            </div>
+            <span className="hidden text-sm font-medium sm:inline">{data?.admin.name ?? "Admin"}</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">

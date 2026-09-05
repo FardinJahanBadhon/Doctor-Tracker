@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PageHeader } from "@/components/common/PageHeader";
 import { EmptyState } from "@/components/common/EmptyState";
 import { ErrorState } from "@/components/common/ErrorState";
 import { DeleteConfirmationDialog } from "@/components/common/DeleteConfirmationDialog";
@@ -90,15 +91,15 @@ export default function DoctorsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold">Doctors</h1>
-          <p className="text-sm text-muted-foreground">Manage doctor profiles.</p>
-        </div>
-        <Button onClick={openCreateDialog}>
-          <Plus size={16} /> Add Doctor
-        </Button>
-      </div>
+      <PageHeader
+        title="Doctors"
+        description="Manage doctor profiles."
+        action={
+          <Button onClick={openCreateDialog}>
+            <Plus size={16} /> Add Doctor
+          </Button>
+        }
+      />
 
       <FilterBar>
         <SearchBar

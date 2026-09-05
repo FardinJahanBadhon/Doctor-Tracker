@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { PatientForm } from "./PatientForm";
 import { useCreatePatientMutation, useUpdatePatientMutation } from "./patientApi";
 import { Patient, PatientInput, PatientDoctorSummary } from "@/types/patient";
@@ -50,9 +50,12 @@ export function PatientDialog({ open, onClose, patient, lockedDoctor }: PatientD
         }
       }}
     >
-      <DialogContent>
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit Patient" : lockedDoctor ? `Add Patient to ${lockedDoctor.name}` : "Add Patient"}</DialogTitle>
+          <DialogDescription>
+            {isEdit ? "Update this patient's record." : "Add a new patient record to the system."}
+          </DialogDescription>
         </DialogHeader>
         <PatientForm
           defaultValues={patient ?? undefined}
