@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { Stethoscope, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useGetHealthQuery } from "@/store/api/apiSlice";
+import { ROUTES } from "@/constants/routes";
 
 export default function Home() {
   const { data, isLoading, isError, error, refetch } = useGetHealthQuery();
@@ -57,6 +59,10 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      <Button asChild>
+        <Link href={ROUTES.login}>Login</Link>
+      </Button>
     </main>
   );
 }

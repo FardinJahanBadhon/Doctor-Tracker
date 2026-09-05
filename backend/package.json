@@ -9,7 +9,8 @@
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "create-admin": "tsx src/scripts/createAdmin.ts",
-    "migrate-patient-doctors": "tsx src/scripts/migratePatientDoctors.ts"
+    "migrate-patient-doctors": "tsx src/scripts/migratePatientDoctors.ts",
+    "seed-demo-data": "tsx src/scripts/seedDemoData.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

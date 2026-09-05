@@ -7,11 +7,15 @@ import { LoginInput } from "../validators/authValidator";
 
 const COOKIE_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 1 day, matches default JWT_EXPIRES_IN
 
+// Frontend and backend are on different origins in production (e.g. a Vercel domain and a
+// Render domain), so the session cookie must be sent cross-site. Browsers only allow that
+// with SameSite=None, which in turn requires Secure — hence both tied to isProduction rather
+// than a plain "lax" that would silently never reach the API in a cross-origin deployment.
 function setAuthCookie(res: Response, token: string): void {
   res.cookie(env.cookieName, token, {
     httpOnly: true,
     secure: env.isProduction,
-    sameSite: "lax",
+    sameSite: env.isProduction ? "none" : "lax",
     maxAge: COOKIE_MAX_AGE_MS,
   });
 }
@@ -36,7 +40,7 @@ export const logoutHandler = asyncHandler(async (_req: Request, res: Response) =
   res.clearCookie(env.cookieName, {
     httpOnly: true,
     secure: env.isProduction,
-    sameSite: "lax",
+    sameSite: env.isProduction ? "none" : "lax",
   });
   res.json({ success: true, message: "Logged out" });
 });
