@@ -23,8 +23,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">
+      {/* suppressHydrationWarning: some browser extensions (e.g. Bitdefender) inject
+          attributes like bis_skin_checked into the DOM before React hydrates, which
+          would otherwise falsely report as a hydration mismatch on every load. */}
+      <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>
