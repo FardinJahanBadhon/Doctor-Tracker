@@ -75,6 +75,9 @@ export async function updateDoctor(id: string, payload: UpdateDoctorInput): Prom
 export async function deleteDoctor(id: string): Promise<void> {
   const doctor = await Doctor.findByIdAndDelete(id).lean();
   if (!doctor) throw ApiError.notFound("Doctor not found");
-  // Keep referential integrity — a patient's `doctor` field must never dangle.
-  await Patient.deleteMany({ doctor: id });
+  // A patient can belong to multiple doctors now, so deleting one doctor should only drop
+  // that reference, not the whole patient record. Only patients left with zero doctors
+  // afterward are removed, to keep the "at least one doctor" invariant that writes enforce.
+  await Patient.updateMany({ doctors: id }, { $pull: { doctors: id } });
+  await Patient.deleteMany({ doctors: { $size: 0 } });
 }

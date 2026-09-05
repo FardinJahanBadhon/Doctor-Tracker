@@ -13,6 +13,11 @@ async function assertDoctorExists(doctorId: string): Promise<void> {
   if (!exists) throw ApiError.notFound("Doctor not found");
 }
 
+async function assertDoctorsExist(doctorIds: string[]): Promise<void> {
+  const count = await Doctor.countDocuments({ _id: { $in: doctorIds } });
+  if (count !== doctorIds.length) throw ApiError.notFound("One or more doctors not found");
+}
+
 function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -27,7 +32,7 @@ function buildFilter(query: ListPatientsQuery): FilterQuery<IPatient> {
     filter.condition = { $regex: `^${escapeRegex(query.condition)}$`, $options: "i" };
   }
   if (query.doctorId) {
-    filter.doctor = query.doctorId;
+    filter.doctors = query.doctorId;
   }
   if (query.dateFrom || query.dateTo) {
     filter.createdAt = {};
@@ -43,21 +48,23 @@ function buildFilter(query: ListPatientsQuery): FilterQuery<IPatient> {
 }
 
 export async function createPatient(payload: CreatePatientInput): Promise<IPatient> {
-  // One query instead of two: the existence check and the doctor summary needed for the
+  // One query instead of two: the existence check and the doctor summaries needed for the
   // response were previously two separate round trips (Doctor.exists, then .populate()
-  // re-fetching the same doctor). Fetching once with the summary fields already selected
+  // re-fetching the same doctors). Fetching once with the summary fields already selected
   // serves both purposes — assigning it onto the ref path is exactly what .populate() does
   // internally, just without the extra query.
-  const doctor = await Doctor.findById(payload.doctor).select(DOCTOR_SUMMARY_FIELDS).lean();
-  if (!doctor) throw ApiError.notFound("Doctor not found");
+  const doctors = await Doctor.find({ _id: { $in: payload.doctors } }).select(DOCTOR_SUMMARY_FIELDS).lean();
+  if (doctors.length !== payload.doctors.length) throw ApiError.notFound("One or more doctors not found");
 
   const patient = await Patient.create(payload);
-  // Assigning a fetched doctor directly onto a *Document's* ref path doesn't mark it
-  // "populated" the way .populate() does — Mongoose's schema-level ObjectId cast would
-  // silently reduce it back to a bare id on serialization. Converting to a plain object
-  // first sidesteps that cast, so the manually-attached summary actually survives to JSON.
+  // Assigning fetched doctors directly onto a *Document's* ref path doesn't mark it
+  // "populated" the way .populate() does — Mongoose's schema-level cast would silently
+  // reduce it back to bare ids on serialization. Converting to a plain object first
+  // sidesteps that cast, so the manually-attached summaries actually survive to JSON.
   const patientObj = patient.toObject();
-  patientObj.doctor = doctor;
+  const doctorsById = new Map(doctors.map((doctor) => [String(doctor._id), doctor]));
+  // Preserve the order the doctors were submitted in, rather than $in's arbitrary order.
+  patientObj.doctors = payload.doctors.map((id) => doctorsById.get(id)!);
   return patientObj;
 }
 
@@ -72,7 +79,7 @@ export async function listPatients(req: Request): Promise<{ patients: IPatient[]
     : Patient.find(filter).sort({ createdAt: -1 });
 
   const [patients, total] = await Promise.all([
-    cursor.skip(skip).limit(limit).populate("doctor", DOCTOR_SUMMARY_FIELDS).lean(),
+    cursor.skip(skip).limit(limit).populate("doctors", DOCTOR_SUMMARY_FIELDS).lean(),
     Patient.countDocuments(filter),
   ]);
 
@@ -87,7 +94,8 @@ export async function listPatientsForDoctor(
   const { page, limit, skip } = getPagination(req);
   const query = req.query as ListPatientsQuery;
   // The doctor is fixed by the URL — any `doctorId` in the query string is ignored.
-  const filter = { ...buildFilter(query), doctor: doctorId };
+  // Matching an array field against a scalar id returns docs where the array contains it.
+  const filter = { ...buildFilter(query), doctors: doctorId };
 
   const cursor = query.search
     ? Patient.find(filter, { score: { $meta: "textScore" } }).sort({ score: { $meta: "textScore" } })
@@ -96,10 +104,10 @@ export async function listPatientsForDoctor(
   // Populated for consistency with the other list endpoints — every patient object the
   // frontend receives has the same shape regardless of which endpoint returned it. This
   // also fixes a real bug: the edit form (opened from this doctor's own page) reads
-  // `patient.doctor._id` to preselect the doctor field, which silently failed when
-  // `doctor` was still a bare id here.
+  // `patient.doctors[]._id` to preselect the doctors field, which silently failed when
+  // `doctors` was still bare ids here.
   const [patients, total] = await Promise.all([
-    cursor.skip(skip).limit(limit).populate("doctor", DOCTOR_SUMMARY_FIELDS).lean(),
+    cursor.skip(skip).limit(limit).populate("doctors", DOCTOR_SUMMARY_FIELDS).lean(),
     Patient.countDocuments(filter),
   ]);
 
@@ -107,18 +115,18 @@ export async function listPatientsForDoctor(
 }
 
 export async function getPatientById(id: string): Promise<IPatient> {
-  const patient = await Patient.findById(id).populate("doctor", DOCTOR_SUMMARY_FIELDS).lean();
+  const patient = await Patient.findById(id).populate("doctors", DOCTOR_SUMMARY_FIELDS).lean();
   if (!patient) throw ApiError.notFound("Patient not found");
   return patient;
 }
 
 export async function updatePatient(id: string, payload: UpdatePatientInput): Promise<IPatient> {
-  if (payload.doctor) {
-    await assertDoctorExists(payload.doctor);
+  if (payload.doctors) {
+    await assertDoctorsExist(payload.doctors);
   }
 
   const patient = await Patient.findByIdAndUpdate(id, payload, { new: true, runValidators: true })
-    .populate("doctor", DOCTOR_SUMMARY_FIELDS)
+    .populate("doctors", DOCTOR_SUMMARY_FIELDS)
     .lean();
   if (!patient) throw ApiError.notFound("Patient not found");
   return patient;

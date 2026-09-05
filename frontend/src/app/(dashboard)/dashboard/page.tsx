@@ -24,12 +24,18 @@ const RANGES: { value: DateRange; label: string }[] = [
   { value: "12m", label: "12 months" },
 ];
 
+// A fixed high limit stands in for "every doctor" — the chart's whole point is showing how
+// load is distributed across the practice, so silently truncating it to a top-N would hide
+// doctors instead. Matches the same convention used for "all doctors" elsewhere (e.g.
+// DoctorCombobox's ALL_DOCTORS_LIMIT).
+const ALL_DOCTORS_LIMIT = 100;
+
 export default function DashboardPage() {
   const { data: me } = useMeQuery();
   const [range, setRange] = useState<DateRange>("30d");
 
   const overview = useGetOverviewQuery();
-  const perDoctor = useGetPatientsPerDoctorQuery();
+  const perDoctor = useGetPatientsPerDoctorQuery({ limit: ALL_DOCTORS_LIMIT });
   const stats = useGetDateStatisticsQuery(range);
 
   return (

@@ -8,9 +8,8 @@ export interface PatientDoctorSummary {
 export interface Patient {
   _id: string;
   name: string;
-  // Populated on read. Optional/nullable to defend against legacy records that
-  // predate this schema and have no `doctor` reference at all.
-  doctor?: PatientDoctorSummary | null;
+  // Populated on read.
+  doctors: PatientDoctorSummary[];
   condition: string;
   phone: string;
   email?: string;
@@ -21,7 +20,7 @@ export interface Patient {
 
 export interface PatientInput {
   name: string;
-  doctor: string;
+  doctors: string[];
   condition: string;
   phone: string;
   email?: string;

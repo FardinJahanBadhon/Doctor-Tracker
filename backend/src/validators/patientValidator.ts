@@ -4,7 +4,7 @@ const objectId = z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid id");
 
 export const createPatientSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(100),
-  doctor: objectId,
+  doctors: z.array(objectId).min(1, "Select at least one doctor"),
   condition: z.string().trim().min(2, "Condition must be at least 2 characters").max(150),
   phone: z
     .string()

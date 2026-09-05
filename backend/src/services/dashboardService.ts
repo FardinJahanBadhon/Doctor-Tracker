@@ -36,18 +36,18 @@ export async function getOverview(): Promise<DashboardOverview> {
  * Top N doctors by patient count, computed entirely in MongoDB with one aggregation
  * pipeline — no per-doctor round trips from application code.
  *
- * The leading $match excludes patient records with no `doctor` reference (legacy rows
- * that predate that field — see Feature 8/9) *before* grouping. This matters beyond
- * correctness of the data itself: without it, those records collapse into one large
- * `_id: null` bucket that can dominate the top of the sort, and a small `limit` (e.g. 1)
- * would then return zero rows — the null bucket consumes the limit and is later dropped
- * by $unwind once $lookup finds no matching doctor for it. Filtering first also shrinks
- * $group's working set and can use the existing {doctor:1, createdAt:-1} index.
+ * A patient can list multiple doctors, so $unwind fans each patient out into one row per
+ * doctor before grouping — a patient with 3 doctors contributes to all 3 counts, which is
+ * the intent (this is "patients per doctor", not "patients" partitioned by a single owner).
+ * The leading $match excludes patients with an empty `doctors` array first: without it,
+ * $unwind drops those rows entirely (fine here, but $match still shrinks $group's working
+ * set and can use the existing {doctors:1, createdAt:-1} index).
  */
 export async function getPatientsPerDoctor(limit = DEFAULT_PATIENTS_PER_DOCTOR_LIMIT): Promise<PatientsPerDoctorRow[]> {
   return Patient.aggregate([
-    { $match: { doctor: { $exists: true, $ne: null } } },
-    { $group: { _id: "$doctor", count: { $sum: 1 } } },
+    { $match: { doctors: { $exists: true, $ne: [] } } },
+    { $unwind: "$doctors" },
+    { $group: { _id: "$doctors", count: { $sum: 1 } } },
     { $sort: { count: -1 } },
     { $limit: limit },
     {

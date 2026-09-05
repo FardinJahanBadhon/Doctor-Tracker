@@ -43,14 +43,14 @@ It's built as two independently deployable applications — a Next.js frontend a
 - Search across name/specialization/hospital/email (MongoDB text index)
 - Filter by specialization, hospital, and date-added range
 - Server-side pagination
-- A doctor's detail page lists their patients, with add/edit/delete scoped to that doctor and the doctor field automatically locked to them
+- A doctor's detail page lists their patients, with add/edit/delete scoped to that doctor and the doctor field automatically locked to include them
 
 **Patient Management**
-- Create, read, update, delete patient records, each linked to exactly one doctor
+- Create, read, update, delete patient records, each linked to one or more doctors
 - Search across name/email/phone/condition (MongoDB text index)
 - Filter by condition, assigned doctor, and date-added range — filters compose together
 - Server-side pagination
-- Deleting a doctor cascades to delete their patients, keeping the data referentially consistent
+- Deleting a doctor removes them from their patients' records; a patient left with no remaining doctor is deleted, keeping "at least one doctor" an enforced invariant
 
 **Dashboard & Analytics**
 - Total doctors / total patients stat cards
@@ -160,11 +160,11 @@ Doctor Tracker/
 
 ## Database Design
 
-MongoDB with three collections. A Doctor has many Patients (one-to-many via a reference, not embedding — patient records outlive/are queried independently of a single doctor view).
+MongoDB with three collections. Doctors and Patients are many-to-many via an array of references on the patient (not embedding, and no separate join collection — Mongo indexes the array directly).
 
 ```mermaid
 erDiagram
-    DOCTOR ||--o{ PATIENT : "treats"
+    DOCTOR }o--o{ PATIENT : "treats"
 
     DOCTOR {
         ObjectId _id PK
@@ -180,7 +180,7 @@ erDiagram
     PATIENT {
         ObjectId _id PK
         string name
-        ObjectId doctor FK
+        ObjectId[] doctors FK
         string condition
         string phone
         string email "optional"
@@ -205,14 +205,14 @@ erDiagram
 | `doctors` | `{ name, specialization, hospital, email }` (text, named `doctor_search_text_index`) | Powers the doctor search box |
 | `doctors` | `{ specialization: 1, hospital: 1 }` | Speeds up combined specialization + hospital filtering |
 | `doctors` | `{ createdAt: -1 }` | Default newest-first sort and date-range filtering |
-| `patients` | `{ doctor: 1, createdAt: -1 }` | The "patients belonging to doctor X, newest first" query used on a doctor's own page |
+| `patients` | `{ doctors: 1, createdAt: -1 }` (multikey) | The "patients belonging to doctor X, newest first" query used on a doctor's own page |
 | `patients` | `{ createdAt: -1 }` | Default newest-first sort on the flat patients list |
 | `patients` | `{ name, email, phone, condition }` (text, named `patient_search_text_index`) | Powers the patient search box |
 | `patients` | `{ condition: 1 }` | Speeds up the condition filter |
 
 MongoDB allows only **one** text index per collection, so both text indexes above are given explicit, stable names — this means a future change to the searchable field set alters the existing index in place instead of silently failing to create a differently-shaped one alongside a stale leftover.
 
-A small number of legacy patient documents (pre-dating the `doctor` reference field) may exist with a `null`/missing `doctor` — every query path (list, search, aggregation) treats this as valid and handles it gracefully rather than assuming the reference is always present.
+A patient's `doctors` array must contain at least one id — enforced by a schema validator (Mongoose's built-in `required` only checks the path is defined, not non-empty) rather than relying on the reference always resolving.
 
 ## API Overview
 
@@ -228,10 +228,10 @@ All routes are mounted under `/api`. Every response is JSON, shaped as either `{
 | POST | `/api/doctors` | Create a doctor |
 | GET | `/api/doctors/:id` | Get one doctor |
 | PUT | `/api/doctors/:id` | Update a doctor (at least one field required) |
-| DELETE | `/api/doctors/:id` | Delete a doctor (cascades to their patients) |
+| DELETE | `/api/doctors/:id` | Delete a doctor (removed from their patients; patients left with no doctor are deleted) |
 | GET | `/api/doctors/:id/patients` | List a specific doctor's patients — same filters/pagination as `/patients`, `doctor` fixed by the URL |
 | GET | `/api/patients` | List patients — supports `search`, `condition`, `doctorId`, `dateFrom`, `dateTo`, `page`, `limit` |
-| POST | `/api/patients` | Create a patient (must reference an existing doctor) |
+| POST | `/api/patients` | Create a patient (must reference at least one existing doctor) |
 | GET | `/api/patients/:id` | Get one patient |
 | PUT | `/api/patients/:id` | Update a patient (at least one field required) |
 | DELETE | `/api/patients/:id` | Delete a patient |
@@ -318,6 +318,7 @@ Open http://localhost:3000, sign in with the admin account created above, and yo
 | `backend/` | `npm run build` / `npm start` | Compile to `dist/` and run the compiled server |
 | `backend/` | `npm run typecheck` | TypeScript check with no build output |
 | `backend/` | `npm run create-admin` | Create or update an admin account |
+| `backend/` | `npm run migrate-patient-doctors` | One-time: migrates patients from the old single `doctor` field to the `doctors` array (run once against any database created before multi-doctor support) |
 | `frontend/` | `npm run dev` | Start the Next.js dev server |
 | `frontend/` | `npm run build` / `npm start` | Production build and serve |
 | `frontend/` | `npm run lint` | ESLint |
@@ -363,7 +364,7 @@ A JWT in `localStorage` is readable by any script running on the page, which mak
 
 **Backend**
 - `.lean()` on every read-only Mongoose query (list, get-by-id, and the post-update/delete results) — skips document hydration (change tracking, getters, prototype methods) for data that's only ever going to be JSON-serialized.
-- Creating a patient does **one** doctor lookup instead of two — the existence check and the doctor summary embedded in the response reuse a single `findById`, instead of a separate `exists()` check followed by a `.populate()` re-fetch.
+- Creating a patient does **one** doctors lookup instead of two — the existence check and the doctor summaries embedded in the response reuse a single `find({ _id: { $in } })`, instead of a separate existence check followed by a `.populate()` re-fetch.
 - Dashboard analytics run as MongoDB aggregation pipelines (`$match` → `$group` → `$sort` → `$lookup`), computed entirely in the database in one round trip rather than pulled into application code and reduced there.
 - Every filter/search/sort the UI exposes is backed by a real index (see [Database Design](#database-design)); combined queries (e.g. specialization + hospital) use a compound index rather than two separate lookups.
 - Consistent, capped pagination (`limit` clamped server-side) on every list endpoint — no unbounded "return everything" queries.

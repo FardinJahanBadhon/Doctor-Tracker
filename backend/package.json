@@ -8,7 +8,8 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
-    "create-admin": "tsx src/scripts/createAdmin.ts"
+    "create-admin": "tsx src/scripts/createAdmin.ts",
+    "migrate-patient-doctors": "tsx src/scripts/migratePatientDoctors.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

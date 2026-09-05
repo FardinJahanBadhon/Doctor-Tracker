@@ -204,7 +204,7 @@ export function DoctorDetails({ doctorId }: { doctorId: string }) {
       <DeleteConfirmationDialog
         open={deleteDoctorOpen}
         title="Delete Doctor"
-        description={`Are you sure you want to delete ${doctor?.name}? This will also remove all of their patient records. This action cannot be undone.`}
+        description={`Are you sure you want to delete ${doctor?.name}? This removes them from all their patients' records; any patient left with no remaining doctor will also be deleted. This action cannot be undone.`}
         isLoading={isDeletingDoctor}
         onConfirm={handleDeleteDoctor}
         onCancel={() => setDeleteDoctorOpen(false)}

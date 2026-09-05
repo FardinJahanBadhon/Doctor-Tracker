@@ -15,14 +15,21 @@ interface PatientTableProps {
   showDoctorColumn?: boolean;
 }
 
-function DoctorCell({ doctor }: { doctor: Patient["doctor"] }) {
-  if (!doctor) {
+function DoctorCell({ doctors }: { doctors: Patient["doctors"] }) {
+  if (doctors.length === 0) {
     return <span className="text-muted-foreground">—</span>;
   }
   return (
-    <Link href={ROUTES.doctorDetails(doctor._id)} className="text-primary hover:underline">
-      {doctor.name}
-    </Link>
+    <div className="flex flex-wrap gap-x-1 gap-y-0.5">
+      {doctors.map((doctor, index) => (
+        <span key={doctor._id}>
+          <Link href={ROUTES.doctorDetails(doctor._id)} className="text-primary hover:underline">
+            {doctor.name}
+          </Link>
+          {index < doctors.length - 1 && ","}
+        </span>
+      ))}
+    </div>
   );
 }
 
@@ -50,7 +57,7 @@ function PatientTableComponent({ patients, onEdit, onDelete, showDoctorColumn = 
                 </Link>
                 {showDoctorColumn && (
                   <p className="text-xs text-muted-foreground md:hidden">
-                    {patient.doctor ? patient.doctor.name : "No doctor assigned"}
+                    {patient.doctors.length > 0 ? patient.doctors.map((d) => d.name).join(", ") : "No doctor assigned"}
                   </p>
                 )}
               </TableCell>
@@ -59,7 +66,7 @@ function PatientTableComponent({ patients, onEdit, onDelete, showDoctorColumn = 
               </TableCell>
               {showDoctorColumn && (
                 <TableCell className="hidden md:table-cell">
-                  <DoctorCell doctor={patient.doctor} />
+                  <DoctorCell doctors={patient.doctors} />
                 </TableCell>
               )}
               <TableCell className="hidden lg:table-cell">{patient.phone}</TableCell>

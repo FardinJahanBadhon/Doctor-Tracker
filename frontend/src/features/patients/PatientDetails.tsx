@@ -71,12 +71,19 @@ export function PatientDetails({ patientId }: { patientId: string }) {
             </div>
 
             <div className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Stethoscope size={16} />
-                {patient.doctor ? (
-                  <Link href={ROUTES.doctorDetails(patient.doctor._id)} className="text-primary hover:underline">
-                    {patient.doctor.name} — {patient.doctor.specialization}
-                  </Link>
+              <div className="flex items-start gap-2 text-muted-foreground sm:col-span-2">
+                <Stethoscope size={16} className="mt-0.5 shrink-0" />
+                {patient.doctors.length > 0 ? (
+                  <div className="flex flex-wrap gap-x-1.5 gap-y-1">
+                    {patient.doctors.map((doctor, index) => (
+                      <span key={doctor._id}>
+                        <Link href={ROUTES.doctorDetails(doctor._id)} className="text-primary hover:underline">
+                          {doctor.name} — {doctor.specialization}
+                        </Link>
+                        {index < patient.doctors.length - 1 && ","}
+                      </span>
+                    ))}
+                  </div>
                 ) : (
                   "No doctor assigned"
                 )}
