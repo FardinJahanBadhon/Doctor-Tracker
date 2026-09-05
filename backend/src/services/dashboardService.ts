@@ -85,6 +85,35 @@ function dateFormat(range: DateRange): string {
   return range === "12m" ? "%Y-%m" : "%Y-%m-%d";
 }
 
+// Every key in [start, end] the chart should show, even ones with zero activity — without
+// this, a day/month with no doctors or patients added simply has no entry at all, and a line
+// chart can't draw a line through a gap. Matches $dateToString's default UTC formatting so
+// these keys line up exactly with the aggregation's grouped _id values.
+function enumerateDateKeys(start: Date, end: Date, range: DateRange): string[] {
+  const keys: string[] = [];
+
+  if (range === "12m") {
+    const cursor = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), 1));
+    const last = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), 1));
+    while (cursor <= last) {
+      keys.push(`${cursor.getUTCFullYear()}-${String(cursor.getUTCMonth() + 1).padStart(2, "0")}`);
+      cursor.setUTCMonth(cursor.getUTCMonth() + 1);
+    }
+    return keys;
+  }
+
+  const cursor = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()));
+  const last = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()));
+  while (cursor <= last) {
+    const y = cursor.getUTCFullYear();
+    const m = String(cursor.getUTCMonth() + 1).padStart(2, "0");
+    const d = String(cursor.getUTCDate()).padStart(2, "0");
+    keys.push(`${y}-${m}-${d}`);
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+  return keys;
+}
+
 /**
  * Doctors added and patients added per day (or per month for the 12-month range),
  * within the window. Each collection is summarized by its own single aggregation
@@ -95,6 +124,7 @@ function dateFormat(range: DateRange): string {
  */
 export async function getStatsByDate(range: DateRange = "30d"): Promise<DateStatisticRow[]> {
   const start = rangeToStart(range);
+  const now = new Date();
   const format = dateFormat(range);
 
   const [doctorStats, patientStats] = await Promise.all([
@@ -111,8 +141,13 @@ export async function getStatsByDate(range: DateRange = "30d"): Promise<DateStat
   ]);
 
   const merged = new Map<string, DateStatisticRow>();
+  for (const key of enumerateDateKeys(start, now, range)) {
+    merged.set(key, { date: key, doctorsAdded: 0, patientsAdded: 0 });
+  }
   for (const row of doctorStats) {
-    merged.set(row._id, { date: row._id, doctorsAdded: row.count, patientsAdded: 0 });
+    const existing = merged.get(row._id);
+    if (existing) existing.doctorsAdded = row.count;
+    else merged.set(row._id, { date: row._id, doctorsAdded: row.count, patientsAdded: 0 });
   }
   for (const row of patientStats) {
     const existing = merged.get(row._id);

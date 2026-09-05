@@ -2,6 +2,12 @@
 
 A secure, full-stack administrative web application for hospital/clinic staff to manage doctors, patients, and the relationships between them — with search, filtering, pagination, and a live analytics dashboard.
 
+## Live Demo
+
+- **URL:** https://frontend-fardin8.vercel.app
+- **Email:** admin@doctortracker.com
+- **Password:** Admin@12345
+
 ---
 
 ## Table of Contents
